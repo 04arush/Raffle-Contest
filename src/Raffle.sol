@@ -130,6 +130,15 @@ contract Raffle is VRFConsumerBaseV2Plus {
     }
 
     /**
+     * @notice Getter function
+     */
+    function getParticipant(uint256 indexOfParticipant)
+        external view returns (address)
+    {
+        return sParticipants[indexOfParticipant];
+    }
+
+    /**
      * @dev Function that the Chainlink nodes will call to see
      * if the lottery is ready to pick a winner
      * the following should be true in order for upkeepNeeded to be true:

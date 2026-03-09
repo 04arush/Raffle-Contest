@@ -7,9 +7,9 @@ import { VRFCoordinatorV2_5Mock } from "@chainlink/contracts/src/v0.8/vrf/mocks/
 abstract contract CodeConstants {
 
     /* VRF Mock values */
-    uint96 public MOCK_BASE_FEE = 0.25 ether;
-    uint96 public MOCK_GAS_PRICE_LINK = 1e9;
-    int256 public MOCK_WEI_PER_UINT_LINK = 4e15;
+    uint96 public mockBaseFee = 0.25 ether;
+    uint96 public mockGasPriceLink = 1e9;
+    int256 public mockWeiPerUintLink = 4e15;
 
     uint256 public constant ETH_SEPOLIA_CHAIN_ID = 11155111;
     uint256 public constant LOCAL_CHAIN_ID = 31337;
@@ -66,9 +66,9 @@ contract HelperConfig is Script, CodeConstants {
 
         vm.startBroadcast();
         VRFCoordinatorV2_5Mock vrfCoordinatorMock =new VRFCoordinatorV2_5Mock(
-            MOCK_BASE_FEE,
-            MOCK_GAS_PRICE_LINK,
-            MOCK_WEI_PER_UINT_LINK
+            mockBaseFee,
+            mockGasPriceLink,
+            mockWeiPerUintLink
         );
         vm.stopBroadcast();
 

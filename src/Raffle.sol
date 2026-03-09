@@ -42,6 +42,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__NotEnoughETH();
     error Raffle__PayoutFailed();
     error Raffle__RaffleClosed();
+    error Raffle__UpkeepNotNeeded(uint256 balance, uint256 numOfParticipants, uint256 raffleState);
 
 
     /* ================= CONSTRUCTORS ================= */
@@ -71,13 +72,14 @@ contract Raffle is VRFConsumerBaseV2Plus {
     /**
      * @notice Function to pick a random winner from the participants
      * @dev get's a random number using Chainlink VRFv2.5
-     * @dev Prvents new people from entering the raffle before the calculation finishes and a winner is picked -
-     * @dev - by switching RaffleState to Calculating (opens after `fulfillRandomWords` function is called by VRF)
+     * Prvents new people from entering the raffle before the calculation finishes and a winner is picked -
+     * - by switching RaffleState to Calculating (opens after `fulfillRandomWords` function is called by VRF)
      */
-    function pickWinner() external {
+    function performUpkeep(bytes calldata /* performData */) external {
 
-        if ((block.timestamp - sLastTimeStamp) < I_INTERVAL) {
-            revert();
+        (bool upkeepNeeded, ) = checkUpkeep("");
+        if (!upkeepNeeded) {
+            revert Raffle__UpkeepNotNeeded(address(this).balance, sParticipants.length, uint256(sRaffleState));
         }
 
         sRaffleState = RaffleState.CALCULATING;
@@ -91,7 +93,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
                 VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
             )
         });
-        uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
+        s_vrfCoordinator.requestRandomWords(request);
     }
 
 
@@ -120,18 +122,43 @@ contract Raffle is VRFConsumerBaseV2Plus {
         return I_ENTRANCE_FEE;
     }
 
+    /**
+     * @dev Function that the Chainlink nodes will call to see
+     * if the lottery is ready to pick a winner
+     * the following should be true in order for upkeepNeeded to be true:
+     * 1. The time interval has passed between raffle runs
+     * 2. The lottery is open
+     * 3. The contract has ETH
+     * 4. Implicit, the contract's subscription has LINK
+     * @param - ignored
+     * @return upkeepNeeded - if it's time to restart the lottery
+     * @return - ignored
+     */
+    function checkUpkeep(bytes memory /* checkData */) 
+        public 
+        view 
+        returns (bool upkeepNeeded, bytes memory /* performData */)
+    {
+        bool timeHasPassed = ((block.timestamp - sLastTimeStamp) >= I_INTERVAL);
+        bool isOpen = sRaffleState == RaffleState.OPEN;
+        bool hasBalance = address(this).balance > 0;
+        bool hasParticipants = sParticipants.length > 0;
+        upkeepNeeded = timeHasPassed && isOpen && hasBalance && hasParticipants;
+        return (upkeepNeeded, "");
+    }
+
 
     /* -------------- Internal Functions -------------- */
 
     /** 
      * @notice Slices out a random winner from the participants list
-     * @dev Overrides the `fulfillRandomWords` function from the `VRFConsumerBaseV2Plus` contract
-     * @dev THIS FUNCTION RUNS IS CALLED BY `VRFConsumerBaseV2Plus` CONTRACT ITSELF
-     * @dev - Raffle opens again for new participants to enter (closed in `pickWinner` function)
-     * @dev - Resets the participants array for fresh new contest
-     * @dev - Resets the timestamp for next contest
+     * @dev THIS IS A CALLBACK FUNCTION, CALLED BY `VRFConsumerBaseV2Plus` CONTRACT
+     * Overrides the `fulfillRandomWords` function from the `VRFConsumerBaseV2Plus` contract
+     * - Raffle opens again for new participants to enter (closed in `pickWinner` function)
+     * - Resets the participants array for fresh new contest
+     * - Resets the timestamp for next contest
      */
-    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+    function fulfillRandomWords(uint256 /* requestId */, uint256[] calldata randomWords) internal override {
         uint256 indexOfWinner = randomWords[0] % sParticipants.length;
         address payable recentWinner = sParticipants[indexOfWinner];
         sRecentWinner = recentWinner;

@@ -118,29 +118,6 @@ contract Raffle is VRFConsumerBaseV2Plus {
     }
 
     /**
-     * @notice Getter function
-     */
-    function getEntranceFee() public view returns (uint256) {
-        return I_ENTRANCE_FEE;
-    }
-
-    /**
-     * @notice Getter function
-     */
-    function getRaffleState() external view returns (RaffleState) {
-        return sRaffleState;
-    }
-
-    /**
-     * @notice Getter function
-     */
-    function getParticipant(uint256 _indexOfParticipant)
-        external view returns (address)
-    {
-        return sParticipants[_indexOfParticipant];
-    }
-
-    /**
      * @dev Function that the Chainlink nodes will call to see
      * if the lottery is ready to pick a winner
      * the following should be true in order for upkeepNeeded to be true:
@@ -163,6 +140,31 @@ contract Raffle is VRFConsumerBaseV2Plus {
         bool hasParticipants = sParticipants.length > 0;
         upkeepNeeded = timeHasPassed && isOpen && hasBalance && hasParticipants;
         return (upkeepNeeded, "");
+    }
+
+    /**
+     * @notice Getter functions
+     */
+    function getEntranceFee() public view returns (uint256) {
+        return I_ENTRANCE_FEE;
+    }
+
+    function getRaffleState() external view returns (RaffleState) {
+        return sRaffleState;
+    }
+
+    function getParticipant(uint256 _indexOfParticipant)
+        external view returns (address)
+    {
+        return sParticipants[_indexOfParticipant];
+    }
+
+    function getLastTimeStamp() external view returns (uint256) {
+        return sLastTimeStamp;
+    }
+
+    function getRecentWinner() external view returns (address) {
+        return sRecentWinner;
     }
 
 

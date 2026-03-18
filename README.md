@@ -2,8 +2,6 @@
 
 A decentralized, provably fair raffle smart contract built with Foundry. Uses **Chainlink VRF v2.5** for verifiable randomness and **Chainlink Automation** for autonomous winner selection — no admin intervention required.
 
-Built while completing [Cyfrin Updraft's Foundry Fundamentals](https://updraft.cyfrin.io/courses/foundry) course.
-
 ---
 
 ## What It Does
